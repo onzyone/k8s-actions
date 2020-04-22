@@ -1,10 +1,10 @@
-name: "Create cluster using KinD"
+name: "Master testing"
 on:
   push:
     branches:
       - 'master'
   pull_request:
-    brances:
+    branches:
       - 'master'
 
 jobs:
