@@ -1,0 +1,77 @@
+name: "testing"
+on:
+  push:
+    branches-ignore:
+      - 'master'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  test-with-kube-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Kubernetes tools
+        uses: stefanprodan/kube-tools@v1
+        with:
+          kubectl: 1.18.0
+          kustomize: 3.4.0
+          helmv3: 3.1.2
+          command: |
+            echo "Run conftest"
+            kustomize build test-k8s/kustomize | conftest test -p test-k8s/policy -
+            echo "Run kubeval"
+            kustomize build test-k8s/kustomize | kubeval --strict
+
+  test-with-kind:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: kubeval
+      uses: instrumenta/kubeval-action@master
+      with:
+        files:  'k8s/'
+    - name: conftest-file
+      uses: instrumenta/conftest-action@master
+      with:
+        files: k8s/deployment.yaml
+        policy: k8s/policy/deployment.rego
+    # - name: conftest-helm
+    #   uses: instrumenta/conftest-action/helm@master
+    #   with:
+    #     chart: charts/example-v1
+    #     policy: charts/policy/example-v1.rego
+    - uses: engineerd/setup-kind@v0.3.0
+      with:
+          version: "v0.7.0"
+    - name: apply-ns
+      run: |
+        kubectl apply -f k8s/namespaces.yaml
+        kubectl get ns
+
+  test-with-helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Fetch history
+        run: git fetch --prune --unshallow
+
+      - name: Run chart-testing (lint)
+        id: lint
+        uses: helm/chart-testing-action@v1.0.0-rc.1
+        with:
+          command: lint
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.0.0-alpha.3
+        # Only build a kind cluster if there are chart changes to test.
+        if: steps.lint.outputs.changed == 'true'
+
+      - name: Run chart-testing (install)
+        uses: helm/chart-testing-action@v1.0.0-rc.1
+        with:
+          command: install
