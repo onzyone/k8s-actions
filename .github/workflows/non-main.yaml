@@ -2,7 +2,7 @@ name: "branch-testing"
 on:
   push:
     branches-ignore:
-      - 'master'
+      - 'main'
   pull_request:
     branches:
       - '**'
