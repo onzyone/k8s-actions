@@ -3,7 +3,7 @@ COPY . /src/pythonapp
 WORKDIR /src/pythonapp
 ARG ENV
 ARG VERSION
-RUN echo $ENV
-RUN echo $VERSION
+RUN echo "value of ENV ${ENV}"
+RUN echo "short sha ${VERSION}"
 
 CMD ["python", "helloworld.py" ]
