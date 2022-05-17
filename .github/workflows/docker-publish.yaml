@@ -89,7 +89,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v3
         with:
-          build-arg: |
+          build-args: |
             ENV=TEST
             VERSION=$(git describe)
           context: .
