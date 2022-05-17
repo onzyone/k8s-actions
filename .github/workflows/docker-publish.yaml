@@ -30,9 +30,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [linux/arm64, linux/amd64]
+    # strategy:
+    #   matrix:
+    #     os: [linux/arm64, linux/amd64]
 
     permissions:
       contents: read
@@ -89,11 +89,14 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
+          build-arg: |
+            ENV=TEST
+            VERSION=$(git describe)
           context: .
-          platforms: ${{ matrix.os }}
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}-${{ matrix.os }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/arm64, linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
